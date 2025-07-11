@@ -189,6 +189,30 @@
             }
         };
 
+        // Function to apply image processing filters
+        function applyImageFilters(imageData) {
+            const data = imageData.data;
+            const threshold = 128; // Simple threshold for binarization
+
+            for (let i = 0; i < data.length; i += 4) {
+                // Grayscale conversion (using luminosity method)
+                const avg = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+
+                // Apply simple contrast enhancement (adjust factor as needed)
+                let contrast = (avg - 128) * 1.5 + 128;
+                contrast = Math.max(0, Math.min(255, contrast)); // Clamp values
+
+                // Binarization (thresholding)
+                const binarized = contrast > threshold ? 255 : 0;
+
+                data[i] = binarized;     // Red
+                data[i + 1] = binarized; // Green
+                data[i + 2] = binarized; // Blue
+                // Alpha (data[i + 3]) remains unchanged
+            }
+            return imageData;
+        }
+
         // Event listener for the capture button
         captureButton.addEventListener('click', async () => {
             hideMessage();
@@ -204,7 +228,16 @@
             // Draw the current video frame onto the canvas
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            // Get image data URL from canvas
+            // Get image data from canvas
+            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            // Apply image processing filters
+            imageData = applyImageFilters(imageData);
+
+            // Put processed image data back onto the canvas
+            context.putImageData(imageData, 0, 0);
+
+            // Get image data URL from processed canvas
             const imageDataUrl = canvas.toDataURL('image/png');
 
             try {
